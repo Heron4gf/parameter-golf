@@ -627,9 +627,7 @@ class MLP(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.fc(x)
-        x = F.leaky_relu(x, negative_slope=0.5)
-        return self.proj(F.leaky_relu(x, negative_slope=0.5).abs() * F.leaky_relu(x, negative_slope=0.5))
-
+        return self.proj(F.relu(x).square())
 
 class Block(nn.Module):
     def __init__(self, dim, num_heads, num_kv_heads, mlp_mult, rope_base, qk_gain_init):
