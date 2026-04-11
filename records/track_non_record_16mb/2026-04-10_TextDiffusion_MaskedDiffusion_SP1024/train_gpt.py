@@ -679,7 +679,7 @@ class BigramHashEmbedding(nn.Module):
 class ValueEmbedding(nn.Module):
     def __init__(self, vocab_size: int, ve_dim: int, model_dim: int):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, ve_dim)
+        self.embed = nn.Embedding(vocab_size + 1, ve_dim)
         nn.init.normal_(self.embed.weight, std=0.01)
         self.proj = CastedLinear(ve_dim, model_dim, bias=False) if ve_dim != model_dim else None
         if self.proj is not None:
@@ -1201,7 +1201,7 @@ class _HessianGPT(nn.Module):
         self.tie_embeddings = tie_embeddings
         self.logit_softcap = logit_softcap
         self.num_layers = num_layers
-        self.tok_emb = nn.Embedding(vocab_size, model_dim)
+        self.tok_emb = nn.Embedding(vocab_size + 1, model_dim)
         self.bigram = BigramHashEmbedding(bigram_vocab_size, bigram_dim, model_dim, trigram=bool(int(os.environ.get("TRIGRAM", "0")))) if bigram_vocab_size > 0 else None
         self.num_encoder_layers = num_layers // 2
         self.num_decoder_layers = num_layers - self.num_encoder_layers
