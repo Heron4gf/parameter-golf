@@ -905,10 +905,10 @@ class GPT(nn.Module):
                 raise RuntimeError("lm_head is required when tie_embeddings=False")
             logits_proj = self.lm_head(x_flat)
         logits = self.logit_softcap * torch.tanh(logits_proj / self.logit_softcap)
-        mask = (input_ids.reshape(-1) == self.vocab_size)
-        if mask.any():
-            return F.cross_entropy(logits[mask].float(), target_ids.reshape(-1)[mask])
-        return logits.new_zeros(())
+        flat_inputs = input_ids.reshape(-1)
+        flat_targets = target_ids.reshape(-1)
+        masked_targets = torch.where(flat_inputs == self.vocab_size, flat_targets, -100)
+        return F.cross_entropy(logits.float(), masked_targets)
     
 def generate_diffusion_calib(model, device, num_seqs=64, seq_len=2048, vocab_size=1024, seed=42):
     rng = torch.Generator(device=device)
