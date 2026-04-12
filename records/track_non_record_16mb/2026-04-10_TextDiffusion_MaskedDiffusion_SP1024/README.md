@@ -19,11 +19,11 @@ The "Text Diffusion" item was explicitly listed as a requested direction in the 
 
 ### Results
 
-| Seed | Steps | Pre-quant BPB | Post-quant BPB | Artifact (bytes) |
-|------|-------|---------------|----------------|------------------|
-| 1337 | TBD   | TBD           | TBD            | TBD              |
+| Seed | Steps  | Pre-quant Score | Post-quant Score | Artifact (bytes) |
+|------|--------|-----------------|------------------|------------------|
+| 1337 | 11,597 | 2.9888          | 2.9965           | 16,671,343       |
 
-> **Note**: Results to be filled after run completion.
+> **⚠️ IMPORTANT EVALUATION NOTE**: Because this is a bidirectional diffusion model, it cannot be evaluated using standard left-to-right causal BPB. The scores listed above are an integrated **Masked Reconstruction Score** evaluated at fixed noise levels and weighted by $1/t$. It is expected to be numerically higher than standard causal BPB and cannot be directly compared to the main leaderboard.
 
 ## Requirements
 
@@ -37,25 +37,17 @@ pip install zstandard
 
 ## Run Command
 
+The script is pre-configured with the default hyperparameters for the 20-minute 8xH100 run. To reproduce the results, execute:
+
 ```bash
-RUN_ID=textdiffusion_sp1024 \
-SEED=1337 \
-MAX_WALLCLOCK_SECONDS=0 \
-DATA_PATH=./data/datasets/fineweb10B_sp1024/ \
-TOKENIZER_PATH=./data/tokenizers/fineweb_1024_bpe.model \
-VOCAB_SIZE=1024 \
-NUM_LAYERS=11 \
-MODEL_DIM=512 \
-NUM_HEADS=8 \
-NUM_KV_HEADS=4 \
-MLP_MULT=3.0 \
-VAL_LOSS_EVERY=4000 \
 torchrun --standalone --nproc_per_node=8 train_gpt.py
 ```
+
+*(Note: All hyperparameters, such as `MAX_WALLCLOCK_SECONDS`, `WARMUP_STEPS`, and `TRAIN_LOG_EVERY`, can still be overridden dynamically using environment variables if desired.)*
 
 ## Observations
 
 - Masked diffusion with non-causal attention is a fundamentally different inductive bias compared to AR models: the model sees the full (partially masked) context at train time, which may help or hurt under a tight parameter budget.
-- The BPB estimation via ELBO approximation at fixed `t` values is noisier than standard AR cross-entropy; more `t` samples per eval step would improve reliability at the cost of eval time.
+- The score estimation via ELBO approximation at fixed `t` values is noisier than standard AR cross-entropy; more `t` samples per eval step would improve reliability at the cost of eval time.
 - The quantization pipeline (int6 GPTQ + LZMA) is unchanged from the AR baseline, so compression behavior should be comparable.
 - This experiment was not optimized for speed or score — the goal was to validate feasibility of the diffusion objective within the challenge framework.
